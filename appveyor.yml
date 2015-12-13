@@ -1,0 +1,68 @@
+skip_tags: true
+
+environment:
+  libiconv: libiconv-1.14
+  mirrors: pacman-mirrors-20150722-2-any.pkg.tar.xz # used in .\msys2.bat
+
+version: "$(libiconv)+{build}"
+
+cache:
+  - '%libiconv%.tar'
+  - '%mirrors%'
+
+init: # Simplify the PATH variable
+  - "set PATH=\
+      ;%SystemRoot%\\system32\
+      ;%SystemRoot%\
+      ;%SystemRoot%\\System32\\Wbem\
+      ;C:\\Program Files\\7-Zip\
+      ;C:\\Program Files\\Git\\cmd\
+      ;C:\\Program Files\\AppVeyor\\BuildAgent\
+      ;C:\\msys64\\usr\\bin\
+    "
+
+install:
+  - .\msys2.bat
+
+before_build: # Download content
+  - "if not exist %libiconv%.tar (
+      appveyor DownloadFile
+      http://ftp.gnu.org/pub/gnu/libiconv/%libiconv%.tar.gz &&
+      7z x %libiconv%.tar.gz &&
+      del %libiconv%.tar.gz
+    )"
+  - 7z x %libiconv%.tar > nul
+
+build_script: # Build libintl with MSYS2
+  - set MSYSTEM=MINGW64
+  - "sh --login -c >nul 2>&1 \"exec 0</dev/null &&
+      cd \"\"\"${libiconv}\"\"\" &&
+      cp /usr/share/automake-1.15/config.guess libcharset/build-aux &&
+      cp /usr/share/automake-1.15/config.sub libcharset/build-aux &&
+      ./configure &&
+      make -C lib
+    \""
+  - set MSYSTEM=
+
+after_build: # Package libintl-8.dll
+  - copy %libiconv%\lib\.libs\libiconv-2.dll .
+  - sh --login -c "sha256sum libiconv-2.dll > libiconv-2.dll.sha256"
+
+artifacts:
+  - path: libiconv-2.dll
+  - path: libiconv-2.dll.sha256
+
+on_failure:
+  - ps: "$blockRdp = $true; iex ((new-object net.webclient).DownloadString((\
+      'https://raw.githubusercontent.com/appveyor/ci/master/scripts/\
+      enable-rdp.ps1')))"
+
+deploy:
+  release: "$(APPVEYOR_BUILD_VERSION)"
+  description: "[AppVeyor build](https://ci.appveyor.com/project/\
+    $(APPVEYOR_REPO_NAME)/build/$(APPVEYOR_BUILD_VERSION))"
+  provider: GitHub
+  draft: true
+  on: { appveyor_repo_tag: false }
+  auth_token:
+    secure: qty+OleXdcHipnzD0RGUfPbTpe5Q9WtPvIknOFhkaIzQ28ccEsMU1mKSKQ2lnLUn
