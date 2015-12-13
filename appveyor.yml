@@ -28,7 +28,7 @@ before_build: # Download content
   - "if not exist %libiconv%.tar (
       appveyor DownloadFile
       http://ftp.gnu.org/pub/gnu/libiconv/%libiconv%.tar.gz &&
-      7z x %libiconv%.tar.gz &&
+      7z x %libiconv%.tar.gz > nul &&
       del %libiconv%.tar.gz
     )"
   - 7z x %libiconv%.tar > nul
