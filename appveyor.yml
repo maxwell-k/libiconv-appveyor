@@ -47,6 +47,11 @@ build_script: # Build libintl with MSYS2
 after_build: # Package libintl-8.dll
   - copy %libiconv%\lib\.libs\libiconv-2.dll .
   - sh --login -c "sha256sum libiconv-2.dll > libiconv-2.dll.sha256"
+  # Display DLL dependencies
+  - 'cd "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\"'
+  - .\SetEnv.cmd /x64 /release > nul
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - dumpbin /dependents libiconv-2.dll
 
 artifacts:
   - path: libiconv-2.dll
