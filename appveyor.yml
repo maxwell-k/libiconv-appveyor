@@ -12,7 +12,7 @@ cache:
 
 init: # Simplify the PATH variable
   - "set PATH=\
-      ;%SystemRoot%\\system32\
+      %SystemRoot%\\system32\
       ;%SystemRoot%\
       ;%SystemRoot%\\System32\\Wbem\
       ;C:\\Program Files\\7-Zip\
